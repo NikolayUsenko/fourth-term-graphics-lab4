@@ -6,24 +6,23 @@ in vec3 Normal;
 
 out vec4 FragColor;
 
-uniform sampler2D uTexture; // Текстура
+uniform sampler2D uTexture; // Текстура бетона
 uniform vec3 uLightPos; // Позиция источника света
 uniform vec3 uViewPos; // Позиция камеры
 uniform vec3 uLightColor; // Цвет света
-uniform float uTime; // Время для эффекта патины
 
-// МАТЕРИАЛ БРОНЗЫ
-const vec3 uMaterialAmbient  = vec3(0.25, 0.15, 0.05); // Фоновое отражение
-const vec3 uMaterialDiffuse  = vec3(0.80, 0.50, 0.20); // Диффузное отражение
-const vec3 uMaterialSpecular = vec3(0.90, 0.70, 0.40); // Зеркальное отражение
-const float uMaterialShininess = 32.0; // Степень блеска
+// МАТЕРИАЛ МОКРОГО БЕТОНА
+const vec3 uMaterialAmbient  = vec3(0.12, 0.12, 0.12); // Фоновое отражение
+const vec3 uMaterialDiffuse  = vec3(0.45, 0.45, 0.45); // Диффузное отражение
+const vec3 uMaterialSpecular = vec3(0.35, 0.35, 0.35); // Зеркальное отражение
+const float uMaterialShininess = 42.0; // Степень блеска
 
 void main() {
-    // Получаем цвет из текстуры
+    // Получаем цвет из текстуры бетона
     vec4 texColor = texture(uTexture, TexCoord);
     
     // ФОНОВОЕ ОСВЕЩЕНИЕ
-    float ambientStrength = 0.25;
+    float ambientStrength = 0.35;
     vec3 ambient = ambientStrength * uLightColor * uMaterialAmbient;
     
     // ДИФФУЗНОЕ ОСВЕЩЕНИЕ
@@ -32,26 +31,18 @@ void main() {
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = uLightColor * diff * uMaterialDiffuse;
     
-    // ЗЕРКАЛЬНОЕ ОСВЕЩЕНИЕ
+    // ЗЕРКАЛЬНОЕ ОСВЕЩЕНИЕ (Blinn-Phong)
     vec3 viewDir = normalize(uViewPos - FragPos);
     vec3 halfVec = normalize(lightDir + viewDir);
     float spec = pow(max(dot(norm, halfVec), 0.0), uMaterialShininess);
     vec3 specular = uLightColor * spec * uMaterialSpecular;
     
-    // ПАТИНИРОВАНИЕ
-    vec3 patinaColor = vec3(0.35, 0.55, 0.35);
-    
-    // Интенсивность патины увеличивается со временем
-    float patinaIntensity = sin(uTime * 0.3) * 0.5 + 0.3;
-    patinaIntensity = max(0.0, (patinaIntensity - 0.4)) * 0.7;
-    
-    float patinaMask = (1.0 - spec) * 0.6;
+    // Мокрый бетон
+    vec3 wetColor = texColor.rgb * 0.5;
+    wetColor = mix(wetColor, vec3(0.25, 0.28, 0.32), 0.5);
     
     // Суммируем освещение
-    vec3 litColor = (ambient + diffuse) * texColor.rgb + specular;
-    
-    // Добавляем эффект патины
-    vec3 result = mix(litColor, patinaColor, patinaIntensity * patinaMask);
+    vec3 result = (ambient + diffuse) * wetColor + specular;
     
     FragColor = vec4(result, 1.0);
 }

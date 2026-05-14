@@ -26,7 +26,7 @@ glm::vec3 getRandomAxis(float time) {
     static std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
     static std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
-    int segment = (int)(time / 3.0f); // Меняем ось каждые 3 секунды
+    int segment = (int)(time / 10.0f); // Меняем ось каждые 10 секунд
     static int lastSegment = -1;
     static glm::vec3 currentAxis(1.0f, 1.0f, 0.0f);
 
@@ -49,7 +49,7 @@ int main() {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // СОЗДАНИЕ ОКНА
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Bronze Cube - Phong Lighting & Patina", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Wet Concrete Cube - Phong Lighting", NULL, NULL);
     if (window == NULL) {
         std::cout << "(!): Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -100,9 +100,9 @@ int main() {
 
     // ЗАГРУЗКА ТЕКСТУРЫ
     Texture texture;
-    if (!texture.loadFromFile("bronze.jpg")) {
-        std::cout << "(!): The texture is not loaded. Make sure that the file is bronze.jpg exists" << std::endl;
-        std::cout << "You can use any other texture by renaming it to bronze.jpg" << std::endl;
+    if (!texture.loadFromFile("concrete.jpg")) {
+        std::cout << "(!): The texture is not loaded. Make sure that the file concrete.jpg exists" << std::endl;
+        std::cout << "(!): You can use any other texture by renaming it to concrete.jpg" << std::endl;
     }
 
     // ЗАГРУЗКА ШЕЙДЕРОВ
@@ -120,7 +120,6 @@ int main() {
     int lightPosLoc = shader.getUniformLocation("uLightPos");
     int viewPosLoc = shader.getUniformLocation("uViewPos");
     int lightColorLoc = shader.getUniformLocation("uLightColor");
-    int timeLoc = shader.getUniformLocation("uTime");
 
     // НАСТРОЙКА КАМЕРЫ
     glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f); // Позиция камеры
@@ -128,19 +127,20 @@ int main() {
     glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f); // Направление "вверх"
 
     // НАСТРОЙКА ИСТОЧНИКА СВЕТА
-    glm::vec3 lightColor = glm::vec3(1.0f, 0.95f, 0.85f); // Тёплый свет для бронзы
+    glm::vec3 lightPos = glm::vec3(2.0f, 3.0f, 2.0f); // Фиксированный источник света сверху-сбоку
+    glm::vec3 lightColor = glm::vec3(1.0f, 0.98f, 0.95f); // Нейтральный тёплый свет
 
     // Устанавливаем текстуру на юнит 0
     glUniform1i(shader.getUniformLocation("uTexture"), 0);
 
-    // Засекаем время для анимации
+    // Засекаем время для анимации вращения
     auto startTime = std::chrono::steady_clock::now();
 
     // СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЮ ДЛЯ ВЫХОДА
     std::cout << "- To exit, press ESC" << std::endl;
 
     while (!glfwWindowShouldClose(window)) {
-        // Получаем текущее время
+        // Получаем текущее время для вращения
         auto currentTime = std::chrono::steady_clock::now();
         float time = std::chrono::duration<float>(currentTime - startTime).count();
 
@@ -148,26 +148,18 @@ int main() {
         processInput(window);
 
         // Очистка экрана
-        glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
+        glClearColor(0.08f, 0.10f, 0.12f, 1.0f); // Тёмный фон
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // ХАОТИЧНОЕ ВРАЩЕНИЕ КУБА
         glm::vec3 randomAxis = getRandomAxis(time);
-        float angle = time * 1.0f; // Скорость вращения
+        float angle = time * 0.8f; // Скорость вращения
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::rotate(model, angle, randomAxis);
 
         // МАТРИЦЫ КАМЕРЫ И ПРОЕКЦИИ
         glm::mat4 view = glm::lookAt(cameraPos, cameraTarget, cameraUp);
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
-        // ДВИЖЕНИЕ ИСТОЧНИКА СВЕТА
-        glm::vec3 lightPos = glm::vec3(
-            2.0f * cos(time * 0.7f),
-            1.5f + sin(time * 0.8f),
-            2.0f * sin(time * 0.5f)
-        );
-        //glm::vec3 lightPos = glm::vec3( 2.0f, 1.5f, 2.0f ); // (!) Для демонстрации патинирования
 
         // ПЕРЕДАЧА UNIFORM В ШЕЙДЕР
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
@@ -176,7 +168,6 @@ int main() {
         glUniform3fv(lightPosLoc, 1, glm::value_ptr(lightPos));
         glUniform3fv(viewPosLoc, 1, glm::value_ptr(cameraPos));
         glUniform3fv(lightColorLoc, 1, glm::value_ptr(lightColor));
-        glUniform1f(timeLoc, time);
 
         // ОТРИСОВКА КУБА
         texture.bind(0);

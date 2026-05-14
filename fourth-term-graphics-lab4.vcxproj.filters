@@ -63,5 +63,8 @@
     <Image Include="bronze.jpg">
       <Filter>textures</Filter>
     </Image>
+    <Image Include="concrete.jpg">
+      <Filter>textures</Filter>
+    </Image>
   </ItemGroup>
 </Project>
